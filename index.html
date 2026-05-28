@@ -3,181 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SINU Mafia Syndicate</title>
+    <title>تحدي العباقرة العلمي 🧪</title>
     <script src="https://cloudflare.com"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #0d0d0d; color: #fff; padding: 15px; margin: 0; }
-        .container { max-width: 500px; margin: auto; background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #ff3333; }
-        h1 { color: #ff3333; font-size: 24px; }
-        .status { background: #262626; padding: 10px; border-radius: 6px; font-size: 14px; color: #ffcca3; word-break: break-all; margin: 15px 0; font-weight: bold; }
-        button { width: 100%; background: #ff3333; color: white; border: none; padding: 12px; font-size: 16px; cursor: pointer; border-radius: 6px; margin: 8px 0; font-weight: bold; }
-        .panel { border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 15px; background: #111; text-align: right; }
-        label { font-size: 14px; color: #ccc; display: block; margin-bottom: 5px; }
-        input { width: 95%; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; margin-bottom: 10px; }
+        body { font-family: sans-serif; text-align: center; background: #0a0a0a; color: #fff; padding: 15px; margin: 0; }
+        .container { max-width: 450px; margin: auto; background: #141414; padding: 25px; border-radius: 12px; border: 2px solid #00ffcc; box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); }
+        h1 { color: #00ffcc; font-size: 22px; margin-bottom: 20px; }
+        .quiz-box { background: #1c1c1c; padding: 20px; border-radius: 8px; margin-bottom: 20px; min-height: 100px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; border-left: 5px solid #00ffcc; }
+        .btn-choice { width: 48%; padding: 15px; font-size: 18px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin: 1%; display: inline-block; }
+        .btn-yes { background: #28a745; }
+        .btn-no { background: #dc3545; }
+        .status-bar { background: #222; padding: 10px; border-radius: 6px; font-size: 14px; color: #ffcca3; margin: 15px 0; font-weight: bold; }
+        .action-btn { width: 100%; background: #cca300; color: white; border: none; padding: 14px; font-size: 16px; cursor: pointer; border-radius: 6px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🕶️ SINU Mafia Syndicate</h1>
-    <div class="status" id="statusBox">المحفظة غير متصلة. يرجى تسجيل الدخول.</div>
+    <h1>🧪 تحدي العباقرة العلمي</h1>
     
-    <button id="connectBtn" onclick="connectWallet()">🔗 ربط محفظة MetaMask</button>
+    <div class="status-bar" id="statusText">المحفظة غير متصلة. اربط محفظتك أولاً لبدء الاختبار.</div>
+    <button class="action-btn" style="background: #00ffcc; color: #000;" id="connectBtn" onclick="connectWallet()">🔗 ربط محفظة Trust Wallet</button>
 
-    <div id="gamePanel" style="display: none;">
-        <div class="panel" style="border-color: #cca300;">
-            <p style="font-size: 13px; color: #cca300; font-weight: bold; margin:0;">⚠️ خطوة إجبارية أولاً:</p>
-            <button style="background:#cca300;" onclick="approveToken()">🔓 تفعيل صلاحية السحب (Approve)</button>
+    <div id="quizInterface" style="display: none;">
+        <div style="text-align: right; font-size: 14px; color: #aaa; margin-bottom: 5px;" id="progressText">السؤال: 1 / 5</div>
+        <div class="quiz-box" id="questionText">جاري تحميل السؤال الأول...</div>
+        
+        <div id="choicesBlock">
+            <button class="btn-choice btn-yes" onclick="submitAnswer(true)">🟢 نعم</button>
+            <button class="btn-choice btn-no" onclick="submitAnswer(false)">🔴 لا</button>
         </div>
 
-        <div class="panel">
-            <h3>⚔️ مهمة اغتيال PvE</h3>
-            <p>التكلفة المطلوبة: <span id="pveCostText" style="color:#00ffcc;">...</span> SINU</p>
-            <button onclick="executePvE()">🎯 تنفيذ عملية اغتيال</button>
-        </div>
-
-        <div class="panel">
-            <h3>🎒 متجر أدوات النجاة</h3>
-            <button onclick="buyItem(1)">💉 شراء الأدرينالين (<span id="adrenalineCostText">...</span> SINU)</button>
-            <button onclick="buyItem(2)">💨 شراء قنبلة الدخان (<span id="smokeCostText">...</span> SINU)</button>
-        </div>
-
-        <div class="panel">
-            <h3>🏆 إنشاء تحدي قتل (PvP)</h3>
-            <label>عنوان المحفظة المستهدفة:</label>
-            <input type="text" id="targetAddress" placeholder="0x...">
-            <label>قيمة الجائزة بالـ SINU:</label>
-            <input type="number" id="bountyAmount" placeholder="5000">
-            <button onclick="createBounty()">💣 إرسال عقد الاغتيال</button>
-        </div>
-
-        <div class="panel">
-            <h3>⚔️ قبول تحدي موجه إليك</h3>
-            <label>رقم التحدي الحالي (Challenge ID):</label>
-            <input type="number" id="challengeIdInput" placeholder="1">
-            <button onclick="acceptFight()">🛡️ قبول التحدي ومواجهته</button>
+        <div id="burnBlock" style="display: none; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #cca300;">
+            <p style="color: #cca300; font-weight: bold; margin: 0 0 10px 0;">🎉 تهانينا! لقد اجتزت الاختبار بنجاح.</p>
+            <p style="font-size: 12px; color: #aaa; margin: 0 0 15px 0;">لتوثيق فوزك وحرق العملات من العقد، يرجى تفعيل المعاملة:</p>
+            <button class="action-btn" style="background: #cca300; margin-bottom: 8px;" onclick="approveToken()">1. تفعيل الصلاحية (Approve)</button>
+            <button class="action-btn" style="background: #28a745;" onclick="triggerBurn()">2. تسجيل الفوز وحرق الرسوم 🎯</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- ضع عقودك الذكية هنا بحرص ---
-    const gameContractAddress = "0x3E71427c4F4c3aE6DBA472Ccb17076E2148A1231"; 
-    const tokenContractAddress = "0x56bB247c424958948B63de291A0C7f45d8651B76"; 
+    const gameContractAddress = "ضع_هنا_عنوان_عقد_اللعبة_الحالي"; 
+    const tokenContractAddress = "0x56bb247c424958948b63de291a0c7f45d8651b76"; 
 
-    const gameABI = [
-        {"inputs":[{"internalType":"uint256","name":"_challengeId","type":"uint256"}],"name":"acceptAndFight","outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[],"name":"adrenalineCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"inputs":[{"internalType":"uint256","name":"_itemType","type":"uint256"}],"name":"buySurvivalItem","outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[{"internalType":"address","name":"_target","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"createBountyChallenge","outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[],"name":"executePveAssassination","outputs":[],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[],"name":"pveAssassinationBurn","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"smokeBombCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
-    ];
-
+    const gameABI = ["function buySurvivalItem(uint256 _itemType) external"];
     const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+    
     let provider, signer, gameContract, tokenContract;
 
-    async function connectWallet() {
-        if (window.ethereum) {
-            try {
-                provider = new ethers.BrowserProvider(window.ethereum);
-                signer = await provider.getSigner();
-                gameContract = new ethers.Contract(gameContractAddress, gameABI, signer);
-                tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);
-                const userAddress = await signer.getAddress();
-                
-                document.getElementById("statusBox").innerText = "تم الاتصال بالمحفظة بنجاح!";
-                document.getElementById("connectBtn").style.display = "none";
-                document.getElementById("gamePanel").style.display = "block";
-                await loadContractData();
-            } catch (err) {
-                document.getElementById("statusBox").innerText = "خطأ: رفض الاتصال بالمحفظة.";
-            }
-        } else {
-            alert("افتح اللعبة من داخل متصفح يدعم المحافظ كـ Kiwi Browser!");
-        }
-    }
+    // بنك الـ 100 سؤال علمي كامل وجاهز
+    const allQuestionsPool = [
+        { q: "هل تعيش حيتان الأوركا في البحر أو المحيط؟", a: true },
+        { q: "هل يعتبر غاز الأكسجين هو الغاز الأكثر وفرة في الغلاف الجوي؟", a: false },
+        { q: "هل الضوء يسير بسرعة أكبر من الصوت؟", a: true },
+        { q: "هل كوكب المشتري هو أكبر كواكب المجموعة الشمسية حجماً؟", a: true },
+        { q: "هل يتكون الماء من عنصري الأكسجين والهيدروجين؟", a: true },
+        { q: "هل الجاذبية على سطح القمر أقوى من الجاذبية على سطح الأرض؟", a: false },
+        { q: "هل الصوت يمكنه الانتقال في الفضاء الخارجي والفراغ التام؟", a: false },
+        { q: "هل تعتبر الشمس نجماً وليست كوكباً؟", a: true },
+        { q: "هل الماس يتكون أساساً من عنصر الكربون المضغوط؟", a: true },
+        { q: "هل تعتمد النباتات على عملية البناء الضوئي لصنع غذائها؟", a: true },
+        { q: "هل الحوت الأزرق هو أضخم كائن حي يعيش على الأرض حالياً؟", a: true },
+        { q: "هل تقع قارة أستراليا بالكامل في النصف الشمالي من الأرض؟", a: false },
+        { q: "هل المعدن الوحيد الذي يبقى سائلاً في حرارة الغرفة هو الزئبق؟", a: true },
+        { q: "هل يدور كوكب الأرض حول الشمس دورة كاملة كل 24 ساعة؟", a: false },
+        { q: "هل يتكون جسم الإنسان البالغ من نسبة مياه تتجاوز 50%؟", a: true },
+        { q: "هل يعتبر الخفاش من الطيور وليس من الثدييات؟", a: false },
+        { q: "هل النواة هي مركز الذرة وتحتوي على البروتونات والنيوترونات？", a: true },
+        { q: "هل غاز ثاني أكسيد الكربون هو الغاز الأساسي لتنفس الإنسان؟", a: false },
+        { q: "هل درجة غليان الماء النقي الطبيعي هي 100 درجة مئوية؟", a: true },
+        { q: "هل سرعة دوران الأرض حول نفسها سبب حدوث الفصول الأربعة؟", a: false },
+        { q: "هل يعتبر الفيروز حجراً كريماً مستخرجاً من الطبيعة؟", a: true },
+        { q: "هل البكتيريا كائنات حية تتكون من خلية واحدة فقط؟", a: true },
+        { q: "هل يمتلك الأخطبوط ثلاثة قلوب مستقلة لضخ الدم؟", a: true },
+        { q: "هل يعتبر الحديد العنصر الأكثر كثافة على جدول العناصر؟", a: false },
+        { q: "هل سور الصين العظيم هو المعلم البشري الوحيد المرئي من القمر؟", a: false },
+        { q: "هل قلب الإنسان ينبض أكثر من 100 ألف مرة في اليوم تقريباً؟", a: true },
+        { q: "هل النمل ينام لعدة ساعات طويلة متواصلة يومياً؟", a: false },
+        { q: "هل كوكب المريخ يعرف باسم الكوكب الأحمر بسبب أكسيد الحديد؟", a: true },
+        { q: "هل ليزر (Laser) هو اختصار لعبارة علمية باللغة الإنجليزية؟", a: true },
+        { q: "هل الغاز الطبيعي له رائحة قوية جداً قبل إضافة المواد المنبهة؟", a: false },
+        { q: "هل الكبد هو أكبر عضو داخلي في جسم الإنسان؟", a: true },
+        { q: "هل الفولاذ أصلب من الحديد النقي؟", a: true },
+        { q: "هل ينتقل المرض المعروف بـ الملاريا عن طريق ذبابة تسه تسه؟", a: false },
+        { q: "هل غاز الأوزون يتكون من ثلاث ذرات أكسجين؟", a: true },
+        { q: "هل السنة الكبيسة تأتي كل 3 سنوات دائماً؟", a: false },
+        { q: "هل البرق يسير من السماء إلى الأرض فقط ولا يعود للأعلى؟", a: false },
+        { q: "هل كوكب الزهرة هو أشد كواكب المجموعة الشمسية حرارة؟", a: true },
+        { q: "هل يحتاج الجنين في بطن أمه إلى تنفس الهواء مباشرة برئتيه؟", a: false },
+        { q: "هل تنتمي التماسيح إلى فصيلة البرمائيات وليس الزواحف؟", a: false },
+        { q: "هل النيتروجين يشكل النسبة الأكبر من الهواء الذي نستنشقه؟", a: true },
+        { q: "هل النحاس أفضل موصل للكهرباء من الفضة؟", a: false },
+        { q: "هل الجمل يخزن الماء في سنامه لعدة أسابيع؟", a: false },
+        { q: "هل الجليد يطفو فوق الماء لأن كثافته أقل من الماء السائل؟", a: true },
+        { q: "هل عدد عظام الشخص البالغ أكبر من عدد عظام الطفل الرضيع؟", a: false },
+        { q: "هل الغدة الدرقية تقع في منطقة الرقبة في جسم الإنسان؟", a: true },
+        { q: "هل ديدان الأرض مفيدة جداً لتهوية التربة الزراعية؟", a: true },
+        { q: "هل ضغط الدم الطبيعي للإنسان هو 120 على 80 تقريباً؟", a: true },
+        { q: "هل يمكن للخلايا العصبية في الدماغ أن تتجدد بسهولة كخلايا الجلد؟", a: false },
+        { q: "هل يمتلك الهيدروجين الرقم الهيدروجيني الأقل في جدول العناصر؟", a: true },
+        { q: "هل حيوان الكنغر يمكنه المشي إلى الخلف بسهولة؟", a: false },
+        { q: "هل البلاتين أغلى وأندر في الطبيعة من الذهب النقي؟", a: true },
+        { q: "هل النسر يمكنه الرؤية في الظلام التام بوضوح كالقطط؟", a: false },
+        { q: "هل المضادات الحيوية تستخدم لقتل الفيروسات وليس البكتيريا؟", a: false },
+        { q: "هل خلايا الدم الحمراء هي المسؤولة عن نقل الأكسجين في الجسم؟", a: true },
+        { q: "هل طبقة الوشاح تقع مباشرة تحت القشرة الأرضية؟", a: true },
+        { q: "هل غاز الهيليوم أثقل من الهواء الجوي الطبيعي؟", a: false },
+        { q: "هل يتكون العمود الفقري للإنسان من فقرات عظمية متصلة؟", a: true },
+        { q: "هل الفطر (العفن) يعتبر من النباتات التي تحتوي على كلوروفيل؟", a: false },
+        { q: "هل الحلزون يمكنه النوم لعدة أشهر متواصلة لحماية نفسه؟", a: true },
+        { q: "هل كوكب نبتون هو أبعد كوكب عن الشمس في مجموعتنا الحالية؟", a: true },
+        { q: "هل الذهب يتأثر بالصدأ والتآكل عند تعرضه للماء والهواء؟", a: false },
+        { q: "هل الأشعة فوق البنفسجية غير مرئية بالعين المجردة للإنسان؟", a: true },
+        { q: "هل تعتبر الطماطم علمياً من الخضار وليست من الفواكه؟", a: false },
+        { q: "هل درجة حرارة الصفر المطلق تعادل -273.15 درجة مئوية؟", a: true },
+        { q: "هل الأناكوندا هي أطول وأثقل الأفاعي في العالم؟", a: true },
+        { q: "هل الغازات تتمدد بالحرارة وتنكمش بالبرودة؟", a: true },
+        { q: "هل جبل إفرست هو أعلى جبل عن مستوى سطح البحر في العالم؟", a: true },
+        { q: "هل النحل يمتلك 4 أجنحة مستقلة للطيران؟", a: true },
+        { q: "هل الفحم الحجري والماس يتكونان من نفس العنصر الكيميائي؟", a: true },
+        { q: "هل تستخدم الخلايا الشمسية طاقة الرياح لتوليد الكهرباء؟", a: false },
+        { q: "هل عظمة الفخذ هي أطول وأقوى عظمة في جسم الإنسان؟", a: true },
+        { q: "هل الخنزير غينيا (Ginea Pig) ينتمي إلى فصيلة الخنازير؟", a: false },
+        { q: "هل ينتقل الصوت أسرع في الماء مقارنة بانتقاله في الهواء؟", a: true },
+        { q: "هل الأنسولين هو الهرمون المسؤول عن تنظيم السكر في الدم؟", a: true },
+        { q: "هل النمل الأبيض يعتبر من النمل الحقيقي من الناحية العلمية؟", a: false },
+        { q: "هل تنمو أظافر اليدين أسرع من أظافر القدمين؟", a: true },
+        { q: "هل الجاذبية هي القوة التي تبقي الكواكب في مداراتها حول الشمس؟", a: true },
+        { q: "هل غاز الهيدروجين هو العنصر الأكثر وفرة في الكون بأكمله؟", a: true },
+        { q: "هل الفيل الأفريقي هو أكبر حيوان بري يعيش على اليابسة؟", a: true },
+        { q: "هل تعتبر المياه المالحة في البحار صالحة للشرب دون تحلية؟", a: false },
+        { q: "هل للذبابة المنزلية أربعة أعين مركبة ضخمة؟", a: false },{ q: "هل الحمض النووي DNA يحمل الشفرة الوراثية لجميع الكائنات؟", a: true },{ q: "هل الخشب يعتبر موصلاً ممتازاً للتيار الكهربائي؟", a: false },{ q: "هل يحتاج الفحم إلى ملايين السنين ليتكون في باطن الأرض؟", a: true },{ q: "هل البومة تستطيع تدوير رأسها بزاوية 270 درجة كاملة؟", a: true },{ q: "هل تفرز المعدة حمض الهيدروكلوريك للمساعدة في هضم الطعام؟", a: true },{ q: "هل تنقرض الديناصورات قبل ظهور البشر بملايين السنين؟", a: true },{ q: "هل قارة القطبية الجنوبية (أنتاركتيكا) هي أكبر صحراء في العالم؟", a: true },{ q: "هل النيزك والشهاب هما نفس الشيء تماماً من الناحية الفلكية؟", a: false },{ q: "هل زلازل الأرض تحدث بسبب حركة الصفائح التكتونية؟", a: true },{ q: "هل الفراشة تبدأ حياتها كيرقة صغيرة؟", a: true },{ q: "هل للأرقام الفردية القدرة على القسمة على 2 بدون باقٍ؟", a: false },{ q: "هل تعيش السلاحف البرية لسنوات قد تتجاوز 100 عام؟", a: true },{ q: "هل يحصل النبات على اللون الأخضر من مادة الكافيين؟", a: false },{ q: "هل يمكن للبرق أن يضرب نفس المكان أكثر من مرة؟", a: true },{ q: "هل النسر الأمريكي يمتلك أصلعاً حقيقياً بدون ريش في رأسه؟", a: false },{ q: "هل البلاتين يتفاعل مع الأكسجين ويصدأ بسهولة؟", a: false },{ q: "هل الموجات الصوتية هي موجات كهرومغناطيسية كالراديو؟", a: false },{ q: "هل يولد الأطفال الرضع بدون رضفة الركبة (تتكون لاحقاً)؟", a: true },{ q: "هل كوكب عطارد يمتلك غلافاً جوياً سميكاً يحميه من حرارة الشمس؟", a: false }];let quizData = [];let currentQuestionIndex = 0;let score = 0;function prepareRandomQuestions() {const shuffled = [...allQuestionsPool].sort(() => 0.5 - Math.random());quizData = shuffled.slice(0, 5);}async function connectWallet() {const walletProvider = window.ethereum || (window.web3 && window.web3.currentProvider);if (walletProvider) {try {await walletProvider.request({ method: 'eth_requestAccounts' });provider = new ethers.BrowserProvider(walletProvider);signer = await provider.getSigner();gameContract = new ethers.Contract(gameContractAddress, gameABI, signer);tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);document.getElementById("statusText").innerText = "متصل بنجاح! ابدأ الإجابة على الأسئلة.";document.getElementById("connectBtn").style.display = "none";document.getElementById("quizInterface").style.display = "block";prepareRandomQuestions();showQuestion();} catch (err) {document.getElementById("statusText").innerText = "خطأ: تم رفض الاتصال.";}} else {alert("افتح الرابط من داخل متصفح Trust Wallet الخاص بالهواتف!");}}function showQuestion() {if (currentQuestionIndex < quizData.length) {document.getElementById("progressText").innerText = السؤال: ${currentQuestionIndex + 1} / ${quizData.length};document.getElementById("questionText").innerText = quizData[currentQuestionIndex].q;} else {finishQuiz();}}function submitAnswer(userAnswer) {if (userAnswer === quizData[currentQuestionIndex].a) {score++;}currentQuestionIndex++;showQuestion();}function finishQuiz() {document.getElementById("choicesBlock").style.display = "none";document.getElementById("progressText").style.display = "none";if (score >= 4) {document.getElementById("questionText").innerText = أحسنت! نتيجتك هي ${score} من ${quizData.length};document.getElementById("burnBlock").style.display = "block";document.getElementById("statusText").innerText = "قم بتأكيد المعاملة لتسجيل فوزك وحرق الرسوم.";} else {document.getElementById("questionText").innerText = للأسف خسرت! نتيجتك ${score} من ${quizData.length};document.getElementById("statusText").innerText = "حاول مجدداً! يجب أن تحصل على 4 نقاط على الأقل للفوز.";const retryBtn = document.createElement("button");retryBtn.className = "action-btn";retryBtn.innerText = "🔄 إعادة المحاولة";retryBtn.onclick = () => { location.reload(); };document.getElementById("quizInterface").appendChild(retryBtn);}}async function approveToken() {try {document.getElementById("statusText").innerText = "جاري إرسال طلب الـ Approve للمحفظة...";const maxAmount = ethers.parseEther("1000000");const tx = await tokenContract.approve(gameContractAddress, maxAmount);document.getElementById("statusText").innerText = "جاري المعالجة على الشبكة...";await tx.wait();document.getElementById("statusText").innerText = "✅ تمت الموافقة بنجاح! اضغط على زر الحرق الآن.";} catch (err) {document.getElementById("statusText").innerText = "❌ فشلت عملية الموافقة.";}}async function triggerBurn() {try {document.getElementById("statusText").innerText = "جاري إرسال عملية حرق التوكنز وتوثيق الفوز...";const tx = await gameContract.buySurvivalItem(1);document.getElementById("statusText").innerText = "بانتظار تأكيد حرق التوكنز على الشبكة...";await tx.wait();document.getElementById("statusText").innerText = "🎉 تم تسجيل فوزك بنجاح وحرق عملات التحدي!";} catch (err) {document.getElementById("statusText").innerText = "❌ فشلت المعاملة: تأكد من الرصيد والـ Approve أولاً.";}}
 
-    async function loadContractData() {
-        try {
-            const pveCost = await gameContract.pveAssassinationBurn();
-            const adrCost = await gameContract.adrenalineCost();
-            const smkCost = await gameContract.smokeBombCost();
-            document.getElementById("pveCostText").innerText = ethers.formatEther(pveCost);
-            document.getElementById("adrenalineCostText").innerText = ethers.formatEther(adrCost);
-            document.getElementById("smokeCostText").innerText = ethers.formatEther(smkCost);
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    async function approveToken() {
-        try {
-            document.getElementById("statusBox").innerText = "جاري طلب التأكيد من المحفظة...";
-            const maxAmount = ethers.parseEther("1000000000"); 
-            const tx = await tokenContract.approve(gameContractAddress, maxAmount);
-            document.getElementById("statusBox").innerText = "جاري معالجة المعاملة على الشبكة...";
-            await tx.wait();
-            document.getElementById("statusBox").innerText = "تم تفعيل الصلاحية بنجاح!";
-        } catch (err) {
-            document.getElementById("statusBox").innerText = "فشلت العملية أو تم إلغاؤها.";
-        }
-    }
-
-    async function executePvE() {
-        try {
-            document.getElementById("statusBox").innerText = "جاري إرسال هجوم PvE...";
-            const tx = await gameContract.executePveAssassination();
-            document.getElementById("statusBox").innerText = "انتظار تأكيد الشبكة وحرق العملات...";
-            await tx.wait();
-            document.getElementById("statusBox").innerText = "تمت عملية الاغتيال بنجاح!";
-        } catch (err) {
-            document.getElementById("statusBox").innerText = "فشلت العملية: تأكد من رصيدك وعمل Approve.";
-        }
-    }
-
-    async function buyItem(type) {
-        try {
-            document.getElementById("statusBox").innerText = "جاري معالجة الشراء من المحفظة...";
-            const tx = await gameContract.buySurvivalItem(type);
-            document.getElementById("statusBox").innerText = "جاري تأكيد حرق القيمة...";
-            await tx.wait();
-            document.getElementById("statusBox").innerText = "تم شراء العنصر واستخدامه بنجاح!";
-        } catch (err) {
-            document.getElementById("statusBox").innerText = "فشلت عملية الشراء.";
-        }
-    }
-
-    async function createBounty() {
-        const target = document.getElementById("targetAddress").value;
-        const amountInput = document.getElementById("bountyAmount").value;
-        if(!ethers.isAddress(target) || !amountInput || amountInput <= 0) return alert("البيانات المدخلة غير صحيحة!");
-        try {
-            document.getElementById("statusBox").innerText = "جاري تجميد رهان التحدي...";
-            const amountWei = ethers.parseEther(amountInput);
-            const tx = await gameContract.createBountyChallenge(target, amountWei);
-            document.getElementById("statusBox").innerText = "جاري تسجيل التحدي على البلوك تشين...";
-            await tx.wait();
-            document.getElementById("statusBox").innerText = "تم إنشاء تحدي القتل PvP بنجاح!";
-        } catch (err) {
-            document.getElementById("statusBox").innerText = "فشل إنشاء التحدي.";
-        }
-    }
-
-    async function acceptFight() {
-        const id = document.getElementById("challengeIdInput").value;
-        if(!id) return alert("أدخل رقم التحدي!");
-        try {
-            document.getElementById("statusBox").innerText = "جاري قبول التحدي وسحب الرهان المقابل...";
-            const tx = await gameContract.acceptAndFight(id);
-            document.getElementById("statusBox").innerText = "المعركة تدور الآن على الشبكة...";
-            await tx.wait();
-            document.getElementById("statusBox").innerText = "انتهت المعركة وتم توزيع الأرباح وحرق النسب المحددة!";
-        } catch (err) {
-            document.getElementById("statusBox").innerText = "فشل قبول التحدي: تحقق من رقم المعركة.";
-        }
-    }
-</script>
-</body>
-</html>
+        

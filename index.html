@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SINU Mafia Syndicate</title>
+    <script src="https://cloudflare.com"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #0d0d0d; color: #fff; padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #ff3333; }
+        h1 { color: #ff3333; font-size: 24px; }
+        .status { background: #262626; padding: 10px; border-radius: 6px; font-size: 14px; color: #ffcca3; word-break: break-all; margin: 15px 0; font-weight: bold; }
+        button { width: 100%; background: #ff3333; color: white; border: none; padding: 12px; font-size: 16px; cursor: pointer; border-radius: 6px; margin: 8px 0; font-weight: bold; }
+        .panel { border: 1px solid #333; padding: 15px; border-radius: 8px; margin-top: 15px; background: #111; text-align: right; }
+        label { font-size: 14px; color: #ccc; display: block; margin-bottom: 5px; }
+        input { width: 95%; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🕶️ SINU Mafia Syndicate</h1>
+    <div class="status" id="statusBox">المحفظة غير متصلة. يرجى تسجيل الدخول.</div>
+    
+    <button id="connectBtn" onclick="connectWallet()">🔗 ربط محفظة MetaMask</button>
+
+    <div id="gamePanel" style="display: none;">
+        <div class="panel" style="border-color: #cca300;">
+            <p style="font-size: 13px; color: #cca300; font-weight: bold; margin:0;">⚠️ خطوة إجبارية أولاً:</p>
+            <button style="background:#cca300;" onclick="approveToken()">🔓 تفعيل صلاحية السحب (Approve)</button>
+        </div>
+
+        <div class="panel">
+            <h3>⚔️ مهمة اغتيال PvE</h3>
+            <p>التكلفة المطلوبة: <span id="pveCostText" style="color:#00ffcc;">...</span> SINU</p>
+            <button onclick="executePvE()">🎯 تنفيذ عملية اغتيال</button>
+        </div>
+
+        <div class="panel">
+            <h3>🎒 متجر أدوات النجاة</h3>
+            <button onclick="buyItem(1)">💉 شراء الأدرينالين (<span id="adrenalineCostText">...</span> SINU)</button>
+            <button onclick="buyItem(2)">💨 شراء قنبلة الدخان (<span id="smokeCostText">...</span> SINU)</button>
+        </div>
+
+        <div class="panel">
+            <h3>🏆 إنشاء تحدي قتل (PvP)</h3>
+            <label>عنوان المحفظة المستهدفة:</label>
+            <input type="text" id="targetAddress" placeholder="0x...">
+            <label>قيمة الجائزة بالـ SINU:</label>
+            <input type="number" id="bountyAmount" placeholder="5000">
+            <button onclick="createBounty()">💣 إرسال عقد الاغتيال</button>
+        </div>
+
+        <div class="panel">
+            <h3>⚔️ قبول تحدي موجه إليك</h3>
+            <label>رقم التحدي الحالي (Challenge ID):</label>
+            <input type="number" id="challengeIdInput" placeholder="1">
+            <button onclick="acceptFight()">🛡️ قبول التحدي ومواجهته</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ضع عقودك الذكية هنا بحرص ---
+    const gameContractAddress = "0x3E71427c4F4c3aE6DBA472Ccb17076E2148A1231"; 
+    const tokenContractAddress = "0x56bB247c424958948B63de291A0C7f45d8651B76"; 
+
+    const gameABI = [
+        {"inputs":[{"internalType":"uint256","name":"_challengeId","type":"uint256"}],"name":"acceptAndFight","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[],"name":"adrenalineCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"uint256","name":"_itemType","type":"uint256"}],"name":"buySurvivalItem","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"_target","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"createBountyChallenge","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[],"name":"executePveAssassination","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[],"name":"pveAssassinationBurn","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"smokeBombCost","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+    ];
+
+    const tokenABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+    let provider, signer, gameContract, tokenContract;
+
+    async function connectWallet() {
+        if (window.ethereum) {
+            try {
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+                gameContract = new ethers.Contract(gameContractAddress, gameABI, signer);
+                tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);
+                const userAddress = await signer.getAddress();
+                
+                document.getElementById("statusBox").innerText = "تم الاتصال بالمحفظة بنجاح!";
+                document.getElementById("connectBtn").style.display = "none";
+                document.getElementById("gamePanel").style.display = "block";
+                await loadContractData();
+            } catch (err) {
+                document.getElementById("statusBox").innerText = "خطأ: رفض الاتصال بالمحفظة.";
+            }
+        } else {
+            alert("افتح اللعبة من داخل متصفح يدعم المحافظ كـ Kiwi Browser!");
+        }
+    }
+
+    async function loadContractData() {
+        try {
+            const pveCost = await gameContract.pveAssassinationBurn();
+            const adrCost = await gameContract.adrenalineCost();
+            const smkCost = await gameContract.smokeBombCost();
+            document.getElementById("pveCostText").innerText = ethers.formatEther(pveCost);
+            document.getElementById("adrenalineCostText").innerText = ethers.formatEther(adrCost);
+            document.getElementById("smokeCostText").innerText = ethers.formatEther(smkCost);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function approveToken() {
+        try {
+            document.getElementById("statusBox").innerText = "جاري طلب التأكيد من المحفظة...";
+            const maxAmount = ethers.parseEther("1000000000"); 
+            const tx = await tokenContract.approve(gameContractAddress, maxAmount);
+            document.getElementById("statusBox").innerText = "جاري معالجة المعاملة على الشبكة...";
+            await tx.wait();
+            document.getElementById("statusBox").innerText = "تم تفعيل الصلاحية بنجاح!";
+        } catch (err) {
+            document.getElementById("statusBox").innerText = "فشلت العملية أو تم إلغاؤها.";
+        }
+    }
+
+    async function executePvE() {
+        try {
+            document.getElementById("statusBox").innerText = "جاري إرسال هجوم PvE...";
+            const tx = await gameContract.executePveAssassination();
+            document.getElementById("statusBox").innerText = "انتظار تأكيد الشبكة وحرق العملات...";
+            await tx.wait();
+            document.getElementById("statusBox").innerText = "تمت عملية الاغتيال بنجاح!";
+        } catch (err) {
+            document.getElementById("statusBox").innerText = "فشلت العملية: تأكد من رصيدك وعمل Approve.";
+        }
+    }
+
+    async function buyItem(type) {
+        try {
+            document.getElementById("statusBox").innerText = "جاري معالجة الشراء من المحفظة...";
+            const tx = await gameContract.buySurvivalItem(type);
+            document.getElementById("statusBox").innerText = "جاري تأكيد حرق القيمة...";
+            await tx.wait();
+            document.getElementById("statusBox").innerText = "تم شراء العنصر واستخدامه بنجاح!";
+        } catch (err) {
+            document.getElementById("statusBox").innerText = "فشلت عملية الشراء.";
+        }
+    }
+
+    async function createBounty() {
+        const target = document.getElementById("targetAddress").value;
+        const amountInput = document.getElementById("bountyAmount").value;
+        if(!ethers.isAddress(target) || !amountInput || amountInput <= 0) return alert("البيانات المدخلة غير صحيحة!");
+        try {
+            document.getElementById("statusBox").innerText = "جاري تجميد رهان التحدي...";
+            const amountWei = ethers.parseEther(amountInput);
+            const tx = await gameContract.createBountyChallenge(target, amountWei);
+            document.getElementById("statusBox").innerText = "جاري تسجيل التحدي على البلوك تشين...";
+            await tx.wait();
+            document.getElementById("statusBox").innerText = "تم إنشاء تحدي القتل PvP بنجاح!";
+        } catch (err) {
+            document.getElementById("statusBox").innerText = "فشل إنشاء التحدي.";
+        }
+    }
+
+    async function acceptFight() {
+        const id = document.getElementById("challengeIdInput").value;
+        if(!id) return alert("أدخل رقم التحدي!");
+        try {
+            document.getElementById("statusBox").innerText = "جاري قبول التحدي وسحب الرهان المقابل...";
+            const tx = await gameContract.acceptAndFight(id);
+            document.getElementById("statusBox").innerText = "المعركة تدور الآن على الشبكة...";
+            await tx.wait();
+            document.getElementById("statusBox").innerText = "انتهت المعركة وتم توزيع الأرباح وحرق النسب المحددة!";
+        } catch (err) {
+            document.getElementById("statusBox").innerText = "فشل قبول التحدي: تحقق من رقم المعركة.";
+        }
+    }
+</script>
+</body>
+</html>

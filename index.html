@@ -166,14 +166,24 @@
         const shuffled = [...allQuestionsPool].sort(() => 0.5 - Math.random());
         quizData = shuffled.slice(0, 5); 
     }
-
     async function connectWallet() {
         const walletProvider = window.ethereum || (window.web3 && window.web3.currentProvider);
+        
         if (walletProvider) {
             try {
-                await walletProvider.request({ method: 'eth_requestAccounts' });
+                document.getElementById("statusText").innerText = "جاري الاتصال بالمحفظة... برجاء الموافقة";
+                
+                // طلب الحسابات من المحفظة
+                const accounts = await walletProvider.request({ method: 'eth_requestAccounts' });
+                
+                if(!accounts || accounts.length === 0) {
+                    throw new Error("لم يتم اختيار أي حساب");
+                }
+
+                // الربط باستخدام مكتبة Ethers v6 بالشكل الصحيح للمتصفحات
                 provider = new ethers.BrowserProvider(walletProvider);
                 signer = await provider.getSigner();
+                
                 gameContract = new ethers.Contract(gameContractAddress, gameABI, signer);
                 tokenContract = new ethers.Contract(tokenContractAddress, tokenABI, signer);
                 
@@ -181,17 +191,19 @@
                 document.getElementById("connectBtn").style.display = "none";
                 document.getElementById("quizInterface").style.display = "block";
                 
-                prepareRandomQuestions(); // توليد الـ 5 أسئلة العشوائية للجولة الحالية
+                prepareRandomQuestions(); 
                 showQuestion();
             } catch (err) {
-                document.getElementById("statusText").innerText = "خطأ: تم رفض الاتصال.";
+                console.error(err);
+                document.getElementById("statusText").innerText = "خطأ: تم رفض أو فشل الاتصال بالمحفظة.";
             }
         } else {
-            alert("افتح الرابط من داخل متصفح Trust Wallet الخاص بالهواتف!");
+            alert("لم يتم العثور على محفظة مخفية. يرجى فتح هذا الرابط من داخل متصفح تطبيق Trust Wallet الرسمي!");
         }
     }
 
-    function showQuestion() {
+                    
+function showQuestion() {
         if (currentQuestionIndex < quizData.length) {
             document.getElementById("progressText").innerText = `السؤال: ${currentQuestionIndex + 1} / ${quizData.length}`;
             document.getElementById("questionText").innerText = quizData[currentQuestionIndex].q;
